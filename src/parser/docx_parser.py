@@ -178,6 +178,43 @@ class DocxParser:
         
         return model_table
     
+    def _get_font_size(self, run) -> Optional[int]:
+        """
+        Get the font size from a run
+        
+        Args:
+            run: A docx run object
+            
+        Returns:
+            Optional[int]: The font size in points or None if not found
+        """
+        # Try different ways to get font size (python-docx has different apis in different versions)
+        if hasattr(run, 'font') and hasattr(run.font, 'size'):
+            if run.font.size is not None:
+                # Convert to points if needed (size can be in half-points or other units)
+                try:
+                    # Size might be a length object that needs conversion
+                    if hasattr(run.font.size, 'pt'):
+                        return int(run.font.size.pt)
+                    # Size might be a raw value
+                    return int(run.font.size) // 2  # Convert half-points to points
+                except (ValueError, TypeError):
+                    # If conversion fails, try to get raw value
+                    return None
+        
+        # Try to get size from the XML directly if python-docx API didn't work
+        try:
+            if hasattr(run, '_element') and hasattr(run._element, 'xpath'):
+                size_elements = run._element.xpath('.//w:sz')
+                if size_elements:
+                    size_val = size_elements[0].get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}val')
+                    if size_val:
+                        return int(size_val) // 2  # Convert half-points to points
+        except:
+            pass
+        
+        return None
+
     def _detect_heading_level(self, paragraph: DocxParagraph) -> int:
         """
         Detect the heading level of a paragraph
@@ -188,7 +225,7 @@ class DocxParser:
         Returns:
             int: The heading level (0 for normal paragraphs)
         """
-        # Check if it's a heading by style name
+        # Check if it's a heading by style name - this is the most reliable method
         if hasattr(paragraph, 'style') and paragraph.style and paragraph.style.name.startswith('Heading'):
             try:
                 # Extract heading level from style name (e.g., 'Heading 1' -> 1)
@@ -196,10 +233,24 @@ class DocxParser:
             except:
                 # Default to level 1 if we can't extract the level
                 return 1
+                
+        # Check for other heading styles that might not start with "Heading"
+        # Some documents use Title, Subtitle, etc.
+        if hasattr(paragraph, 'style') and paragraph.style:
+            style_name = paragraph.style.name.lower()
+            if 'title' in style_name:
+                return 1
+            if 'subtitle' in style_name:
+                return 2
         
-        # Check if it's a bold paragraph (our analysis showed that bold paragraphs are treated as headings)
+        # If no heading style is found, try to determine level from formatting
         if paragraph.runs and paragraph.text.strip():
-            # If the entire paragraph is bold
+            # Get the font size of the first run if available
+            font_size = None
+            if len(paragraph.runs) > 0:
+                font_size = self._get_font_size(paragraph.runs[0])
+            
+            # Check if the entire paragraph is bold
             all_text = "".join(run.text for run in paragraph.runs)
             all_bold = True
             
@@ -208,13 +259,51 @@ class DocxParser:
                     all_bold = False
                     break
             
+            # If it's all bold, determine level by additional clues
             if all_bold and all_text.strip():
-                return 1  # Treat as heading level 1
+                # Check if there's a font size we can use to determine level
+                if font_size:
+                    # Font sizes often decrease as heading levels increase
+                    # These thresholds are estimates and may need adjustment
+                    if font_size >= 20:  # Very large text
+                        return 1
+                    elif font_size >= 16:
+                        return 2
+                    elif font_size >= 14:
+                        return 3
+                    else:
+                        return 4
+                
+                # Check for other formatting that might indicate level
+                all_caps = all(c.isupper() for c in all_text if c.isalpha())
+                if all_caps:
+                    return 1  # ALL CAPS text is often a top-level heading
+                
+                # Look at length as a heuristic - shorter headings tend to be higher level
+                if len(all_text.strip()) <= 20:
+                    return 2
+                else:
+                    return 3
             
             # If the first run is bold and contains the entire text
             first_run = paragraph.runs[0]
             if first_run.bold and first_run.text.strip() and first_run.text.strip() == paragraph.text.strip():
-                return 1  # Treat as heading level 1
+                # Apply the same font size logic for single-run bold paragraphs
+                if font_size:
+                    if font_size >= 20:
+                        return 1
+                    elif font_size >= 16:
+                        return 2
+                    elif font_size >= 14:
+                        return 3
+                    else:
+                        return 4
+                
+                # If no font size info, use text length as a basic heuristic
+                if len(first_run.text.strip()) <= 20:
+                    return 2
+                else:
+                    return 3
         
         return 0  # Not a heading
     
