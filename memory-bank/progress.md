@@ -9,6 +9,8 @@
 - Heading level detection has been enhanced to properly recognize different heading levels
 - A new test script has been created to verify heading level detection
 - The conversion pipeline is now functional with proper heading hierarchy support
+- Newline handling within paragraphs has been fixed to maintain proper indentation
+- Formatted text runs with newlines are now correctly handled with formatting applied to each line
 
 ## What Works
 - **Document Model**:
@@ -31,6 +33,8 @@
   - Images are extracted and saved with correct references
   - Tables are converted to Markdown format
   - ZIP archives are created with proper structure
+  - Paragraphs with newlines maintain proper indentation throughout
+  - Formatted text (bold, italic, etc.) is correctly applied to each line when text contains newlines
 
 ## Parser Analysis Results
 - The parser successfully processes the example document
@@ -51,6 +55,9 @@
 - Implemented text formatting conversion (bold, italic, etc. to Markdown syntax)
 - Implemented ZIP archive creation with proper file structure
 - Created test script to verify the entire conversion pipeline
+- Fixed newline handling in paragraphs to maintain proper indentation throughout
+- Enhanced the _format_text_with_runs method to handle newlines in formatted text correctly
+- Created a test script (test_newlines.py) to verify newline handling
 - All tests pass with the updated implementation
 
 ## What's Left to Build
@@ -60,6 +67,7 @@
    - ~~Image handling and storage~~ ✓
    - ~~Table conversion~~ ✓
    - ~~ZIP archive creation~~ ✓
+   - ~~Proper newline handling~~ ✓
 
 2. ~~**Heading Level Detection**~~
    - ~~Style-based detection~~ ✓
@@ -80,5 +88,6 @@
 5. **Milestone 4**: ~~Add image saving functionality~~ ✓
 6. **Milestone 5**: ~~Implement ZIP archive creation~~ ✓
 7. **Milestone 5.5**: ~~Enhance heading level detection~~ ✓
-8. **Milestone 6**: Add error handling and command-line interface
-9. **Milestone 7**: Complete testing and documentation 
+8. **Milestone 5.6**: ~~Fix newline handling in paragraphs and formatted text~~ ✓
+9. **Milestone 6**: Add error handling and command-line interface
+10. **Milestone 7**: Complete testing and documentation 

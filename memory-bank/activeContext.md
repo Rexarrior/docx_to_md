@@ -1,7 +1,7 @@
 # Active Context
 
 ## Current Focus
-We've enhanced the DocxParser to correctly detect and preserve heading levels from Word documents. Previously, all bold text paragraphs were treated as level 1 headings, but now we can detect various heading levels based on styles, font sizes, and other formatting cues. This improvement ensures the Markdown output correctly represents the document's hierarchical structure.
+We've recently fixed the handling of newlines within paragraphs in the Markdown output. The issue was related to maintaining proper indentation for lines that were split by newlines within the same paragraph and ensuring that formatting (bold, italic, etc.) is correctly applied to each line individually. We implemented a solution that preserves the document's hierarchical structure and ensures consistent indentation and formatting throughout multi-line paragraphs.
 
 ## Recent Developments
 - Implemented Document, Paragraph, Image, and Table model classes
@@ -13,6 +13,9 @@ We've enhanced the DocxParser to correctly detect and preserve heading levels fr
 - Created test scripts to verify the conversion pipeline
 - Enhanced heading level detection to properly recognize different heading levels
 - Created a test script to verify proper heading level conversion
+- Fixed newline handling in paragraphs to maintain proper indentation throughout
+- Enhanced the _format_text_with_runs method to handle newlines in formatted text correctly
+- Created a test script (test_newlines.py) to verify newline handling
 - All tests pass with the updated implementation
 
 ## Parser Implementation Insights
@@ -35,6 +38,8 @@ We've enhanced the DocxParser to correctly detect and preserve heading levels fr
 - Document structure is preserved with headings, paragraphs, and other elements
 - Special characters are escaped in Markdown to prevent formatting issues
 - ZIP archives are created with proper structure, containing the Markdown file and media folder
+- Paragraphs with newlines maintain proper indentation throughout with tabs based on heading level
+- Formatted text runs with newlines have formatting (bold, italic, etc.) correctly applied to each line separately
 
 ## Current Priorities
 1. Implement error handling for edge cases
@@ -55,6 +60,8 @@ We've enhanced the DocxParser to correctly detect and preserve heading levels fr
 - **Image Handling**: Saving images in a media folder and referencing them with proper paths
 - **Table Formatting**: Converting tables to Markdown using pipe syntax with proper alignments
 - **ZIP Structure**: Organizing the output as a Markdown file and a media folder in a ZIP archive
+- **Newline Handling**: Ensuring that lines split by newlines within the same paragraph maintain proper indentation
+- **Formatted Text with Newlines**: Applying formatting markers to each line individually when text contains newlines
 
 ## Next Steps
 1. Implement error handling for edge cases (file access issues, malformed documents, etc.)
@@ -74,6 +81,8 @@ We've enhanced the DocxParser to correctly detect and preserve heading levels fr
 - **Document Hierarchy**: All document elements are processed in the order they appear in the source
 - **Escape Handling**: Special Markdown characters are escaped to prevent formatting issues
 - **Archive Creation**: ZIP archives are created with proper structure for easy distribution
+- **Paragraph Indentation**: Indentation is maintained throughout paragraphs with newlines based on heading level
+- **Formatting Continuity**: Formatting is applied to each line individually when text contains newlines
 
 ## Heading Level Detection Enhancement
 - Enhanced the `_detect_heading_level` method to use multiple approaches for determining heading levels:
@@ -84,6 +93,19 @@ We've enhanced the DocxParser to correctly detect and preserve heading levels fr
 - Added a new helper method `_get_font_size` to extract and normalize font size information
 - Created a specialized test script (`test_heading_levels.py`) to verify heading level detection
 - Test results confirmed proper heading level distribution in the output markdown
+
+## Newline Handling Enhancement
+- Enhanced the `_add_indent_after_newlines` method to ensure proper indentation after each newline in paragraph text
+- Modified the `_format_text_with_runs` method to handle newlines in formatted text properly:
+  - Text is split by newlines and each line is formatted individually
+  - Formatting markers (bold, italic, etc.) are applied to each line separately
+  - Empty lines within text are preserved (except at the end)
+  - Markdown characters are escaped properly if needed
+- Created a specialized test script (`test_newlines.py`) to verify newline handling:
+  - Tests various paragraph types with newlines (plain text, formatted text, bullet lists)
+  - Verifies that indentation is maintained throughout paragraphs
+  - Confirms that formatting is correctly applied to each line
+- Test results confirmed proper newline handling in the output markdown
 
 ## Open Questions
 - Best approach for handling complex nested lists

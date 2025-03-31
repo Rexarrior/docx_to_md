@@ -16,6 +16,7 @@ class MarkdownWriter:
         self.document: Optional[Document] = None
         self.media_folder: str = ""
         self.md_file_path: str = ""
+        self.current_heading_level: int = 0  # Track the current heading level for indentation
         
     def write_document(self, document: Document, output_path: str) -> str:
         """
@@ -30,6 +31,7 @@ class MarkdownWriter:
         """
         self.document = document
         self.output_dir = os.path.dirname(output_path)
+        self.current_heading_level = 0
         
         # Create output directory if it doesn't exist
         if not os.path.exists(self.output_dir):
@@ -69,29 +71,74 @@ class MarkdownWriter:
         Returns:
             str: Markdown representation of the paragraph
         """
+        # Update the current heading level when encountering a heading
+        if paragraph.is_heading():
+            self.current_heading_level = paragraph.heading_level
+        
+        # Determine indentation based on current level
+        content_indent = "\t" * self.current_heading_level
+        
         # If paragraph has an image, format it
         if paragraph.has_image():
-            return self._format_image(paragraph.image, os.path.basename(self.output_dir))
+            return content_indent + self._format_image(paragraph.image, os.path.basename(self.output_dir))
         
         # If paragraph has a table, format it
         if paragraph.has_table():
-            return self._format_table(paragraph.table)
+            return self._format_table(paragraph.table, self.current_heading_level)
         
-        # If it's a heading, format as heading
+        # If it's a heading, format with appropriate indentation and dash
         if paragraph.is_heading():
-            heading_marks = '#' * paragraph.heading_level
-            return f"{heading_marks} {paragraph.text}\n\n"
+            # Level 1 heading gets no tabs, level 2 gets 1 tab, etc.
+            heading_indent = "\t" * (paragraph.heading_level - 1) if paragraph.heading_level > 0 else ""
+            # Make heading text bold
+            return f"{heading_indent}- **{paragraph.text}**\n\n"
         
-        # If paragraph has formatted runs, use them
+        # Check if the paragraph text starts with a bullet point or numbered list
+        text = paragraph.text.strip()
+        if text.startswith("- ") or re.match(r"^\d+\.\s", text):
+            # For bullet points and numbered lists that are part of the content, 
+            # add one extra tab for proper list formatting
+            # Also handle newlines in the text by adding proper indentation after each newline
+            indented_text = self._add_indent_after_newlines(text, content_indent)
+            return f"{content_indent}{indented_text}\n\n"
+        
+        # If paragraph has formatted runs, use them with content indentation
         if paragraph.runs:
-            return self._format_text_with_runs(paragraph) + '\n\n'
+            formatted_text = self._format_text_with_runs(paragraph)
+            # Check for lists in formatted text
+            if formatted_text.strip().startswith("- ") or re.match(r"^\d+\.\s", formatted_text.strip()):
+                indented_text = self._add_indent_after_newlines(formatted_text, content_indent)
+                return f"{content_indent}{indented_text}\n\n"
+            else:
+                indented_text = self._add_indent_after_newlines(formatted_text, content_indent)
+                return f"{content_indent}{indented_text}\n\n"
         
-        # Otherwise, just return the text with a double newline
-        if paragraph.text.strip():
-            return f"{paragraph.text}\n\n"
+        # Otherwise, just return the text with a double newline and indentation
+        if text:
+            indented_text = self._add_indent_after_newlines(text, content_indent)
+            return f"{content_indent}{indented_text}\n\n"
         
         # Empty paragraph
         return "\n"
+        
+    def _add_indent_after_newlines(self, text: str, indent: str) -> str:
+        """
+        Add proper indentation after each newline in the text
+        
+        Args:
+            text: The text to process
+            indent: The indentation to add after newlines
+            
+        Returns:
+            str: Text with proper indentation after newlines
+        """
+        # Skip if there are no newlines
+        if '\n' not in text:
+            return text
+        
+        # Split by newline and join with newline + indent
+        lines = text.split('\n')
+        return '\n'.join([lines[0]] + [f"{indent}{line}" for line in lines[1:]])
         
     def _format_image(self, image: Image, document_name: str) -> str:
         """
@@ -109,18 +156,28 @@ class MarkdownWriter:
         image_path = f"{media_folder_name}/{image.new_file_name}"
         return f"![{alt_text}]({image_path})\n\n"
         
-    def _format_table(self, table: Table) -> str:
+    def _format_table(self, table: Table, indent_level: int) -> str:
         """
-        Convert a Table object to Markdown table syntax
+        Convert a Table object to Markdown table syntax with proper indentation
         
         Args:
             table: A Table object
+            indent_level: Current indentation level
             
         Returns:
             str: Markdown table representation
         """
-        # Use the built-in get_markdown method from the Table class
-        return table.get_markdown() + "\n\n"
+        indent = "\t" * indent_level
+        
+        # Get the basic markdown table
+        table_md = table.get_markdown()
+        
+        # Apply indentation to each line while preserving table format
+        indented_lines = []
+        for line in table_md.split('\n'):
+            indented_lines.append(f"{indent}{line}")
+        
+        return '\n'.join(indented_lines) + "\n\n"
         
     def _create_zip_archive(self, md_file_path: str, media_folder_path: str) -> str:
         """
@@ -180,25 +237,63 @@ class MarkdownWriter:
             is_underline = run.get('underline', False)
             is_strike = run.get('strike', False)
             
-            # Only escape characters if no formatting is applied
-            # or text contains characters that need escaping
-            if not any([is_bold, is_italic, is_underline, is_strike]) and any(c in text for c in '*_#`[]()'):
-                text = self._escape_markdown_chars(text)
-            
-            # Apply formatting (wrapping in reverse order of application)
-            if is_strike:
-                text = f"~~{text}~~"
+            # Check if we need to handle newlines in this run
+            if '\n' in text and any([is_bold, is_italic, is_underline, is_strike]):
+                # Split the text by newlines
+                lines = text.split('\n')
+                formatted_lines = []
                 
-            if is_underline:
-                text = f"<u>{text}</u>"
+                for i, line in enumerate(lines):
+                    if not line and i < len(lines) - 1:
+                        # Preserve empty lines that aren't at the end
+                        formatted_lines.append('')
+                        continue
+                    
+                    line_text = line
+                    
+                    # Only escape characters if no formatting is applied
+                    # or text contains characters that need escaping
+                    if any(c in line_text for c in '*_#`[]()'):
+                        line_text = self._escape_markdown_chars(line_text)
+                    
+                    # Apply formatting to each line separately
+                    if is_strike and line_text:
+                        line_text = f"~~{line_text}~~"
+                        
+                    if is_underline and line_text:
+                        line_text = f"<u>{line_text}</u>"
+                        
+                    if is_italic and line_text:
+                        line_text = f"*{line_text}*"
+                        
+                    if is_bold and line_text:
+                        line_text = f"**{line_text}**"
+                    
+                    formatted_lines.append(line_text)
                 
-            if is_italic:
-                text = f"*{text}*"
+                # Join the lines back with newlines
+                md_text += '\n'.join(formatted_lines)
+            else:
+                # Process single-line text as before
+                # Only escape characters if no formatting is applied
+                # or text contains characters that need escaping
+                if not any([is_bold, is_italic, is_underline, is_strike]) and any(c in text for c in '*_#`[]()'):
+                    text = self._escape_markdown_chars(text)
                 
-            if is_bold:
-                text = f"**{text}**"
-                
-            md_text += text
+                # Apply formatting (wrapping in reverse order of application)
+                if is_strike:
+                    text = f"~~{text}~~"
+                    
+                if is_underline:
+                    text = f"<u>{text}</u>"
+                    
+                if is_italic:
+                    text = f"*{text}*"
+                    
+                if is_bold:
+                    text = f"**{text}**"
+                    
+                md_text += text
         
         return md_text
     
@@ -243,6 +338,9 @@ class MarkdownWriter:
             str: Complete Markdown content
         """
         md_content = ""
+        
+        # Reset current heading level
+        self.current_heading_level = 0
         
         # Process all paragraphs
         for paragraph in self.document.paragraphs:
