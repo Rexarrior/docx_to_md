@@ -6,6 +6,14 @@
 - Process both paragraphs and tables as they appear in the document rather than processing them separately
 - Document structure should maintain the exact ordering of elements from the source document
 
+## Heading Level Detection
+- Use a multi-faceted approach to detect heading levels from Word documents
+- Check for official heading styles first (Heading 1, Heading 2, etc.)
+- Look for other common heading styles like Title, Subtitle, etc.
+- Analyze font sizes with appropriate thresholds for different heading levels
+- Consider text attributes like bold formatting, CAPS, and length as additional heading level indicators
+- Preserve the document's hierarchical structure in the converted Markdown
+
 ## Formatting Rules
 - Use PEP 8 style guide for Python code
 - Use 4 spaces for indentation (not tabs)

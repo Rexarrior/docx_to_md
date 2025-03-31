@@ -1,7 +1,7 @@
 # Active Context
 
 ## Current Focus
-The MarkdownWriter implementation has been completed and successfully tested. We've implemented all the core functionality to convert document models to Markdown format, handle image extraction and saving, format text with proper Markdown syntax, and create ZIP archives with the correct structure. The entire conversion pipeline from Word documents to Markdown files is now functional.
+We've enhanced the DocxParser to correctly detect and preserve heading levels from Word documents. Previously, all bold text paragraphs were treated as level 1 headings, but now we can detect various heading levels based on styles, font sizes, and other formatting cues. This improvement ensures the Markdown output correctly represents the document's hierarchical structure.
 
 ## Recent Developments
 - Implemented Document, Paragraph, Image, and Table model classes
@@ -11,10 +11,16 @@ The MarkdownWriter implementation has been completed and successfully tested. We
 - Created special test scripts to verify table positioning
 - Implemented the MarkdownWriter with full functionality
 - Created test scripts to verify the conversion pipeline
+- Enhanced heading level detection to properly recognize different heading levels
+- Created a test script to verify proper heading level conversion
 - All tests pass with the updated implementation
 
 ## Parser Implementation Insights
-- Heading detection based on bold text works effectively
+- Heading detection now examines multiple factors:
+  - Official "Heading" style names with numeric level indicators
+  - Other style names like "Title" and "Subtitle"
+  - Font sizes of paragraph text
+  - Bold formatting with additional heuristics (ALL CAPS text, text length)
 - Tables are correctly parsed with rows and columns preserved in proper document flow
 - Images are extracted with their binary content
 - Text formatting information (bold, italic, etc.) is preserved in runs
@@ -25,6 +31,7 @@ The MarkdownWriter implementation has been completed and successfully tested. We
 - Text formatting is properly converted to Markdown syntax (bold to **bold**, italic to *italic*, etc.)
 - Images are extracted and saved in a media folder, with correct path references in Markdown
 - Tables are converted to Markdown using pipe syntax with proper alignment
+- Heading levels are properly translated to corresponding Markdown heading syntax (# for level 1, ## for level 2, etc.)
 - Document structure is preserved with headings, paragraphs, and other elements
 - Special characters are escaped in Markdown to prevent formatting issues
 - ZIP archives are created with proper structure, containing the Markdown file and media folder
@@ -38,12 +45,13 @@ The MarkdownWriter implementation has been completed and successfully tested. We
 ## Active Decisions
 - **Parser Implementation**: Using python-docx to extract content from DOCX files
 - **Document Flow**: Processing paragraphs and tables in order by directly accessing document body elements
-- **Heading Detection**: Treating paragraphs with bold text as headings
+- **Heading Detection**: Using a multi-faceted approach that considers styles, font sizes, bold formatting, and text properties
+- **Font Size Analysis**: Added helper method to extract font sizes from paragraph runs, supporting heading level determination
 - **Image Processing**: Extracting and sequentially numbering images
 - **Table Processing**: Converting tables to Markdown tables with proper alignment
 - **Test-Driven Development**: Using pytest for unit testing the parser
 - **Text Formatting**: Converting bold to `**bold**`, italic to `*italic*`, etc.
-- **Heading Conversion**: Translating heading levels to corresponding Markdown headings
+- **Heading Conversion**: Translating heading levels to corresponding Markdown headings with the appropriate number of # symbols
 - **Image Handling**: Saving images in a media folder and referencing them with proper paths
 - **Table Formatting**: Converting tables to Markdown using pipe syntax with proper alignments
 - **ZIP Structure**: Organizing the output as a Markdown file and a media folder in a ZIP archive
@@ -57,7 +65,7 @@ The MarkdownWriter implementation has been completed and successfully tested. We
 ## Current Conversion Process Insights
 - **Document Flow**: Elements are processed in the exact order they appear in the source document
 - **Text Formatting**: Bold text in Word is converted to `**bold**` in Markdown
-- **Heading Structure**: Bold paragraphs are treated as headings in Markdown
+- **Heading Structure**: Heading levels are detected from styles, font sizes, and formatting attributes
 - **Image Handling**: Images from the docx are extracted and referenced in Markdown with the format `![alt_text](image_name.png)`
 - **Image Naming**: Images are named sequentially (document.002.png, document.003.png, etc.)
 - **Table Conversion**: Tables are converted to Markdown table syntax with proper alignment indicators (`:-)`)
@@ -67,13 +75,15 @@ The MarkdownWriter implementation has been completed and successfully tested. We
 - **Escape Handling**: Special Markdown characters are escaped to prevent formatting issues
 - **Archive Creation**: ZIP archives are created with proper structure for easy distribution
 
-## Table Detection Fix
-- Fixed the issue with table detection by modifying the parser to process document elements in flow order
-- Tables are now correctly positioned in the parsed document structure
-- Created specialized test scripts to verify table positions
-- Direct access to the document body (`self.docx._body._body`) allows us to process elements in their natural order
-- Modified `_process_document_elements` method to handle both paragraphs and tables as they appear
-- Test confirmed tables appear at positions 15 and 18 in the parsed document, matching their actual positions in the document flow
+## Heading Level Detection Enhancement
+- Enhanced the `_detect_heading_level` method to use multiple approaches for determining heading levels:
+  - First checking for official heading styles (Heading 1, Heading 2, etc.)
+  - Looking for other style names like "Title" and "Subtitle"
+  - Analyzing font sizes with graduated thresholds for different heading levels
+  - Considering text characteristics like case (ALL CAPS) and length
+- Added a new helper method `_get_font_size` to extract and normalize font size information
+- Created a specialized test script (`test_heading_levels.py`) to verify heading level detection
+- Test results confirmed proper heading level distribution in the output markdown
 
 ## Open Questions
 - Best approach for handling complex nested lists
