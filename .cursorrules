@@ -1,0 +1,33 @@
+# Word-to-Markdown Converter Project Rules
+
+## Formatting Rules
+- Use PEP 8 style guide for Python code
+- Use 4 spaces for indentation (not tabs)
+- Maximum line length of 100 characters
+- Use docstrings for all modules, classes, and functions
+- Comment complex algorithms and logic
+
+## Naming Conventions
+- Use snake_case for variables and functions
+- Use PascalCase for classes
+- Use UPPER_CASE for constants
+- Use descriptive names that indicate purpose
+
+## File Organization
+- Organize code into logical modules based on functionality
+- Keep related functionality in the same file
+- Separate utility functions into their own modules
+- Use __init__.py files to organize package structure
+
+## Code Patterns
+- Prefer functional programming approaches where appropriate
+- Use type hints for function parameters and return values
+- Implement error handling with appropriate try/except blocks
+- Use context managers for file operations
+
+## Project-Specific Guidelines
+- Follow the pipeline architecture for the conversion process
+- Implement each component as a separate class with clear interfaces
+- Use strategy pattern for handling different content types
+- Maintain clear separation between parsing, conversion, and output generation
+- Ensure proper error handling and reporting throughout the pipeline 
