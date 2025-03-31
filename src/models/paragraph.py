@@ -17,16 +17,20 @@ class Paragraph:
         
     def has_image(self) -> bool:
         """Check if the paragraph contains an image"""
-        pass
+        return self.image is not None
     
     def has_table(self) -> bool:
         """Check if the paragraph contains a table"""
-        pass
+        return self.table is not None
     
     def is_heading(self) -> bool:
         """Check if the paragraph is a heading"""
-        pass
+        return self.heading_level > 0
     
     def add_run(self, text: str, formatting: Dict[str, bool]) -> None:
         """Add a text run with formatting information"""
-        pass 
+        run = {
+            "text": text,
+            **formatting
+        }
+        self.runs.append(run) 

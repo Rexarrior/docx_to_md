@@ -15,12 +15,20 @@ class Document:
         
     def add_paragraph(self, paragraph: Paragraph) -> None:
         """Add a paragraph to the document"""
-        pass
+        self.paragraphs.append(paragraph)
     
     def get_images(self) -> List:
         """Get all images in the document"""
-        pass
+        images = []
+        for paragraph in self.paragraphs:
+            if paragraph.image is not None:
+                images.append(paragraph.image)
+        return images
     
     def get_tables(self) -> List:
         """Get all tables in the document"""
-        pass 
+        tables = []
+        for paragraph in self.paragraphs:
+            if paragraph.table is not None:
+                tables.append(paragraph.table)
+        return tables 

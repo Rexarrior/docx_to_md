@@ -1,4 +1,5 @@
 from typing import Optional, Union, BinaryIO
+import os
 
 class Image:
     """
@@ -25,4 +26,13 @@ class Image:
         Returns:
             str: Path to the saved image
         """
-        pass 
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+            
+        output_path = os.path.join(output_dir, self.new_file_name)
+        
+        # Write the image content to the file
+        with open(output_path, 'wb') as f:
+            f.write(self.content)
+            
+        return output_path 
