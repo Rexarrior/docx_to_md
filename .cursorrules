@@ -1,5 +1,11 @@
 # Word-to-Markdown Converter Project Rules
 
+## Document Flow Handling
+- When parsing DOCX files, always process document elements in the original document flow order
+- Use direct access to document body via `docx._body._body` to preserve element ordering
+- Process both paragraphs and tables as they appear in the document rather than processing them separately
+- Document structure should maintain the exact ordering of elements from the source document
+
 ## Formatting Rules
 - Use PEP 8 style guide for Python code
 - Use 4 spaces for indentation (not tabs)
@@ -30,4 +36,11 @@
 - Implement each component as a separate class with clear interfaces
 - Use strategy pattern for handling different content types
 - Maintain clear separation between parsing, conversion, and output generation
-- Ensure proper error handling and reporting throughout the pipeline 
+- Ensure proper error handling and reporting throughout the pipeline
+
+## Testing Approach
+- Use a Test-Driven Development (TDD) approach
+- Write tests before implementing functionality
+- Create specialized test scripts for complex functionality verification
+- Use pytest for unit testing
+- Test both individual components and their integration 

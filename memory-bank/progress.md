@@ -3,7 +3,8 @@
 ## Current Status
 - Architecture design has been completed
 - Document model classes have been implemented
-- DocxParser has been implemented and tested
+- DocxParser has been implemented and enhanced to preserve document flow
+- Table detection issue has been resolved
 - Ready to begin implementing MarkdownWriter
 
 ## What Works
@@ -13,18 +14,28 @@
 
 - **Parser Component**:
   - DocxParser successfully parses Word documents
+  - Document flow is preserved with correct element ordering
   - Heading detection for bold text works correctly
   - Image extraction is functional
-  - Table parsing is implemented
+  - Table parsing is implemented with correct positioning
   - Text formatting is preserved
 
 ## Parser Analysis Results
 - The parser successfully processes the example document
 - It identifies headings (36), images (8), and tables (2)
+- Tables are correctly positioned in the document flow (at positions 15 and 18)
 - Text formatting (bold, italic) is correctly extracted
 - All 183 paragraphs are parsed into structured objects
-- Document hierarchy is maintained
+- Document hierarchy and flow are maintained
 - The test suite confirms all parser functionality works as expected
+
+## Recent Fix
+- Fixed table detection issue by modifying the parser to process document elements in flow order
+- Created specialized test scripts (`test_table_detection.py` and `test_table_fix.py`) to verify table positions
+- Tables now appear in the correct document flow order rather than being processed separately
+- Direct access to the document body allows for processing elements in their natural order
+- Enhanced `_process_document_elements` method to handle both paragraphs and tables as they appear
+- All tests pass with the updated implementation
 
 ## What's Left to Build
 1. **Markdown Writer**
@@ -42,8 +53,9 @@
 ## Next Milestones
 1. **Milestone 1**: ~~Implement document model classes~~ ✓
 2. **Milestone 2**: ~~Create DocxParser with basic parsing functionality~~ ✓
-3. **Milestone 3**: Build MarkdownWriter with formatting support
-4. **Milestone 4**: Add image saving functionality
-5. **Milestone 5**: Implement ZIP archive creation
-6. **Milestone 6**: Add error handling and command-line interface
-7. **Milestone 7**: Complete testing and documentation 
+3. **Milestone 2.5**: ~~Fix table detection to preserve document flow~~ ✓
+4. **Milestone 3**: Build MarkdownWriter with formatting support
+5. **Milestone 4**: Add image saving functionality
+6. **Milestone 5**: Implement ZIP archive creation
+7. **Milestone 6**: Add error handling and command-line interface
+8. **Milestone 7**: Complete testing and documentation 

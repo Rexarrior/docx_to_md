@@ -37,23 +37,36 @@ class DocxParser:
         # Load the docx file
         self.docx = DocxDocument(docx_path)
         
-        # Process paragraphs
-        for paragraph in self.docx.paragraphs:
-            if paragraph.text.strip() or self._has_image(paragraph):
-                parsed_paragraph = self._parse_paragraph(paragraph)
-                self.document.add_paragraph(parsed_paragraph)
-        
-        # Process tables
-        for table in self.docx.tables:
-            parsed_table = self._parse_table(table)
-            
-            # Create a paragraph for the table
-            table_paragraph = Paragraph()
-            table_paragraph.table = parsed_table
-            
-            self.document.add_paragraph(table_paragraph)
+        # Process document body elements in order
+        self._process_document_elements()
         
         return self.document
+        
+    def _process_document_elements(self):
+        """
+        Process all document elements (paragraphs and tables) in the order they appear.
+        """
+        # Get all block elements in document body
+        body = self.docx._body._body
+        
+        # Process elements in document order
+        for element in body.iterchildren():
+            if element.tag.endswith('p'):
+                # It's a paragraph
+                paragraph = DocxParagraph(element, self.docx)
+                if paragraph.text.strip() or self._has_image(paragraph):
+                    parsed_paragraph = self._parse_paragraph(paragraph)
+                    self.document.add_paragraph(parsed_paragraph)
+            elif element.tag.endswith('tbl'):
+                # It's a table
+                table = DocxTable(element, self.docx)
+                parsed_table = self._parse_table(table)
+                
+                # Create a paragraph for the table
+                table_paragraph = Paragraph()
+                table_paragraph.table = parsed_table
+                
+                self.document.add_paragraph(table_paragraph)
         
     def _parse_paragraph(self, paragraph: DocxParagraph) -> Paragraph:
         """
