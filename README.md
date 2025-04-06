@@ -17,7 +17,7 @@ A Python tool for converting Microsoft Word (.docx) documents to Markdown format
 
 ```bash
 git clone https://github.com/yourusername/word-to-md-converter.git
-cd word-to-md-converter
+cd docx_to_md
 ```
 
 2. Install the dependencies:
